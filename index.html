@@ -43,6 +43,9 @@
                 <button id="tab-share-btn" onclick="switchTab('share')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center">
                     <i class="fa-solid fa-share-nodes mr-1.5 text-sky-300"></i>同期・共有
                 </button>
+                <button id="tab-manual-btn" onclick="switchTab('manual')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center">
+                    <i class="fa-solid fa-circle-question mr-1.5 text-emerald-300"></i>使い方
+                </button>
             </nav>
         </div>
     </header>
@@ -431,6 +434,106 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- TAB 5: Manual (使い方) -->
+        <div id="tab-manual" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+                <div class="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-100">
+                    <div class="bg-emerald-100 p-3 rounded-xl text-emerald-600">
+                        <i class="fa-solid fa-book-open text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black text-slate-800">ランキング告知ジェネレーター 使い方ガイド</h2>
+                        <p class="text-xs text-slate-500 mt-1">誰でも簡単にランキング告知文を作成できるツールのマニュアルです。</p>
+                    </div>
+                </div>
+
+                <div class="space-y-8">
+                    <!-- セクション1 -->
+                    <section>
+                        <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center">
+                            <i class="fa-solid fa-star text-amber-400 mr-2"></i>主な特徴
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h4 class="text-sm font-bold text-indigo-700 mb-1">🚀 爆速テキスト生成</h4>
+                                <p class="text-xs text-slate-600">数字と名前を入れるだけで、自動で降順ソートされた美しい告知用テキストを作成。</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h4 class="text-sm font-bold text-indigo-700 mb-1">📋 柔軟な一括コピペ対応</h4>
+                                <p class="text-xs text-slate-600">LINEなどの集計文をそのまま貼り付けるだけで、一瞬で全データの振り分けが可能。</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h4 class="text-sm font-bold text-indigo-700 mb-1">📈 前回結果との自動比較</h4>
+                                <p class="text-xs text-slate-600">「記憶」機能により、ランク変動マーク（🔺・🔻・➡️・✨）を自動付与。</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h4 class="text-sm font-bold text-indigo-700 mb-1">🔗 ワンクリックURL共有</h4>
+                                <p class="text-xs text-slate-600">アカウント不要。発行されたURLを送るだけで、相手も同じ状態から編集可能。</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- セクション2 -->
+                    <section>
+                        <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center">
+                            <i class="fa-solid fa-shoe-prints text-indigo-400 mr-2"></i>基本の使い方（4ステップ）
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800">基本情報の設定</h4>
+                                    <p class="text-xs text-slate-600 mt-1">「告知作成」タブでチーム名、対象月などを入力します。データ更新日時の横にある「現在時刻を設定」ボタンが便利です。</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800">実績データの入力（おすすめは一括入力！）</h4>
+                                    <p class="text-xs text-slate-600 mt-1">一つずつ入力することもできますが、「一括テキスト入力」ボタンから、名前と数値が並んだテキストをそのままコピペして反映させるのが最速です。</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800">前回順位との比較</h4>
+                                    <p class="text-xs text-slate-600 mt-1">今回の集計結果を次回も使いたい場合は、「今回結果を記憶」ボタンを押します。次回集計時に自動比較され、順位変動マークが付与されます。</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">4</div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800">プレビュー＆コピー</h4>
+                                    <p class="text-xs text-slate-600 mt-1">右側のプレビューエリアに完成テキストが表示されます。「テキストをクリップボードにコピー」を押して、LINE等に送信してください。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- セクション3 -->
+                    <section>
+                        <h3 class="text-base font-bold text-slate-800 mb-3 flex items-center">
+                            <i class="fa-solid fa-circle-question text-rose-400 mr-2"></i>よくある質問（FAQ）
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <p class="text-sm font-bold text-slate-800 mb-1">Q. 入力したデータは他の人に見られますか？</p>
+                                <p class="text-xs text-slate-600">A. 基本的にお使いの端末（ブラウザ）内にのみローカル保存されるため、他者へ公開されることはありません。共有URLや合言葉同期を利用した際のみ、指定した相手とデータが共有されます。</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <p class="text-sm font-bold text-slate-800 mb-1">Q. 配信時間の表記は「○時間○分」以外でも大丈夫ですか？</p>
+                                <p class="text-xs text-slate-600">A. はい。「85.5h」「85時間半」「85h30m」「5130分」など、様々な形式を自動解析して正確に順位ソートを行います。</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <p class="text-sm font-bold text-slate-800 mb-1">Q. 誤ってページを閉じたらデータは消えますか？</p>
+                                <p class="text-xs text-slate-600">A. リアルタイムで自動保存されるため、同じブラウザで開き直せば直前の状態が復元されます。</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -1313,7 +1416,7 @@
         }
 
         function switchTab(tabName) {
-            const tabs = ['generator', 'members', 'settings', 'share'];
+            const tabs = ['generator', 'members', 'settings', 'share', 'manual'];
 
             tabs.forEach(t => {
                 const tabEl = document.getElementById(`tab-${t}`);
