@@ -463,10 +463,48 @@
                         <p>入力したデータはすべてお使いのスマホやパソコン（ブラウザ内）に自動で保存されます。サーバーへ送信されないため安心です。</p>
                     </div>
                 </div>
+
+                <!-- Danger Zone: Reset All Local Data -->
+                <div class="mt-6 pt-4 border-t border-slate-200">
+                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-rose-800 text-xs sm:text-sm flex items-center">
+                                <i class="fa-solid fa-triangle-exclamation mr-1.5 text-rose-600"></i>ローカル保存データのリセット
+                            </h3>
+                            <p class="text-[11px] text-rose-700 mt-0.5">
+                                この端末に保存されているすべてのデータ（入力中メンバー、マスタ、各種設定、前回記憶データ）を完全初期化・全削除します。
+                            </p>
+                        </div>
+                        <button onclick="showResetConfirmModal()" class="w-full sm:w-auto px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all shadow-sm shrink-0 flex items-center justify-center">
+                            <i class="fa-solid fa-trash-can mr-1.5"></i>データを全削除（初期化）
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
     </main>
+
+    <!-- Modal: Reset All Data Confirmation -->
+    <div id="reset-confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200">
+        <div id="reset-confirm-modal-card" class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 transform scale-95 transition-all duration-200">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-xl font-bold mb-3 mx-auto">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 text-center mb-1.5">保存データをすべて削除しますか？</h3>
+            <p class="text-xs text-slate-600 leading-relaxed text-center mb-5">
+                入力中の実績データ、メンバーマスタ、告知文テンプレート、順位比較データなどのすべての保存内容が削除され、初期状態に戻ります。<br><span class="font-bold text-rose-600">※この操作は取り消せません。</span>
+            </p>
+            <div class="flex gap-2">
+                <button onclick="hideResetConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                    キャンセル
+                </button>
+                <button onclick="executeFullReset()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+                    すべて削除して初期化
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Default Master Data and App State
@@ -474,21 +512,21 @@
             info: {
                 team: "ライト",
                 month: "9",
-                announcement: "1日・10日・20日",
-                updated_diamond: "",
-                updated_hours: ""
+                announcement: "1日・10日・20日（※前後する可能性あり）",
+                updated_diamond: "9/10 20:50",
+                updated_hours: "9/10 20:50"
             },
             template: {
-                header: "🏆【{team}】{month}月度 途中経過報告 🏆\n\n平素より応援ありがとうございます！\n次回告知予定日：{announcement}",
-                diamondTitle: "💎 月間ダイヤランキング",
-                hoursTitle: "⏱ 月間配信時間ランキング",
-                divider: "--------------------------",
-                footer: "※数値反映の遅れがある場合があります。\n※集計漏れ等は担当までご連絡ください。"
+                header: "チーム{team}内\n📢【{month}月月間ランキングについて】\n🗓{announcement}\nにランキングを共有します！",
+                diamondTitle: "💎ダイヤ数ランキング",
+                hoursTitle: "⏱配信時間ランキング",
+                divider: "_______________________",
+                footer: ""
             },
             timeFormat: "standard", // standard | decimal | raw
             entries: [],
             previousEntries: [], // Array of { name, diamondRank, hoursRank }
-            masterMembers: ["あおい", "さくら", "ひなた", "れん", "かいと"],
+            masterMembers: ["あーちゃん", "＠ちゃん", "ビタミン", "紫乃", "ひとみん", "カツヤ", "まさお", "まちゃの会", "亜美ぽて", "ライト", "bear", "りんご"],
             settings: {
                 markEnabled: true,
                 markUp: "🔺",
@@ -503,15 +541,21 @@
             loadFromLocalStorage();
             checkUrlHashData();
 
-            if (!appState.info.updated_diamond) setCurrentDateTime('diamond', false);
-            if (!appState.info.updated_hours) setCurrentDateTime('hours', false);
-
             if (appState.entries.length === 0) {
-                // Add initial sample rows if empty
+                // Initial sample rows matching screenshot
                 appState.entries = [
-                    { id: Date.now() + 1, name: "あおい", diamond: "185.2", hours: "95時間20分" },
-                    { id: Date.now() + 2, name: "さくら", diamond: "210.0", hours: "110時間00分" },
-                    { id: Date.now() + 3, name: "ひなた", diamond: "142.5", hours: "80.5h" }
+                    { id: Date.now() + 1, name: "あーちゃん", diamond: "164.7", hours: "50時間16分" },
+                    { id: Date.now() + 2, name: "＠ちゃん", diamond: "139.8", hours: "22時間11分" },
+                    { id: Date.now() + 3, name: "ビタミン", diamond: "84.1", hours: "20時間31分" },
+                    { id: Date.now() + 4, name: "紫乃", diamond: "61", hours: "12時間58分" },
+                    { id: Date.now() + 5, name: "ひとみん", diamond: "51.8", hours: "16時間10分" },
+                    { id: Date.now() + 6, name: "カツヤ", diamond: "9.1", hours: "21時間16分" },
+                    { id: Date.now() + 7, name: "まさお", diamond: "4.9", hours: "7時間45分" },
+                    { id: Date.now() + 8, name: "まちゃの会", diamond: "4.1", hours: "8時間7分" },
+                    { id: Date.now() + 9, name: "亜美ぽて", diamond: "1.2", hours: "7時間55分" },
+                    { id: Date.now() + 10, name: "ライト", diamond: "1", hours: "5時間26分" },
+                    { id: Date.now() + 11, name: "bear", diamond: "0", hours: "0分" },
+                    { id: Date.now() + 12, name: "りんご", diamond: "0", hours: "0分" }
                 ];
             }
 
@@ -737,35 +781,34 @@
                 .replaceAll('{updated_diamond}', appState.info.updated_diamond)
                 .replaceAll('{updated_hours}', appState.info.updated_hours);
 
-            text += "\n\n" + appState.template.divider + "\n";
-            text += `【${appState.template.diamondTitle}】\n`;
-            if (appState.info.updated_diamond) text += `（更新：${appState.info.updated_diamond}）\n`;
-            text += "\n";
+            text += "\n\n\n" + appState.template.divider + "\n";
+            text += `${appState.template.diamondTitle}\n`;
+            if (appState.info.updated_diamond) text += `※${appState.info.updated_diamond}\n`;
+            text += appState.template.divider + "\n\n";
 
             // Build Diamond Ranking Text
             diamondList.forEach((item, index) => {
                 const rank = index + 1;
                 const mark = getRankMark(item.name, rank, 'diamond');
                 const valStr = item.diamond ? `${item.diamond}k` : '0k';
-                text += `${rank}位: ${mark}${item.name} (${valStr})\n`;
+                text += `${rank}位 ${mark}${item.name} ${valStr}\n`;
             });
 
             text += "\n" + appState.template.divider + "\n";
-            text += `【${appState.template.hoursTitle}】\n`;
-            if (appState.info.updated_hours) text += `（更新：${appState.info.updated_hours}）\n`;
-            text += "\n";
+            text += `${appState.template.hoursTitle}\n`;
+            if (appState.info.updated_hours) text += `※${appState.info.updated_hours}\n`;
+            text += appState.template.divider + "\n\n";
 
             // Build Hours Ranking Text
             hoursList.forEach((item, index) => {
                 const rank = index + 1;
                 const mark = getRankMark(item.name, rank, 'hours');
                 const timeStr = formatMinutes(item.totalMinutes, item.hours);
-                text += `${rank}位: ${mark}${item.name} (${timeStr})\n`;
+                text += `${rank}位 ${mark}${item.name} ${timeStr}\n`;
             });
 
-            text += "\n" + appState.template.divider + "\n";
             if (appState.template.footer) {
-                text += appState.template.footer + "\n";
+                text += "\n" + appState.template.divider + "\n" + appState.template.footer + "\n";
             }
 
             document.getElementById('output-text-area').textContent = text.trim();
@@ -1211,6 +1254,63 @@
                     "'": '&#039;'
                 }[m];
             });
+        }
+
+        function showResetConfirmModal() {
+            const modal = document.getElementById('reset-confirm-modal');
+            const card = document.getElementById('reset-confirm-modal-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+
+        function hideResetConfirmModal() {
+            const modal = document.getElementById('reset-confirm-modal');
+            const card = document.getElementById('reset-confirm-modal-card');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+
+        function executeFullReset() {
+            hideResetConfirmModal();
+            try {
+                localStorage.removeItem('ranking_generator_state');
+            } catch (e) {
+                console.error("LocalStorage clear failed", e);
+            }
+
+            // Reset state to initial default values
+            appState = {
+                info: {
+                    team: "ライト",
+                    month: "9",
+                    announcement: "1日・10日・20日（※前後する可能性あり）",
+                    updated_diamond: "9/10 20:50",
+                    updated_hours: "9/10 20:50"
+                },
+                template: {
+                    header: "チーム{team}内\n📢【{month}月月間ランキングについて】\n🗓{announcement}\nにランキングを共有します！",
+                    diamondTitle: "💎ダイヤ数ランキング",
+                    hoursTitle: "⏱配信時間ランキング",
+                    divider: "_______________________",
+                    footer: ""
+                },
+                timeFormat: "standard",
+                entries: [],
+                previousEntries: [],
+                masterMembers: ["あーちゃん", "＠ちゃん", "ビタミン", "紫乃", "ひとみん", "カツヤ", "まさお", "まちゃの会", "亜美ぽて", "ライト", "bear", "りんご"],
+                settings: {
+                    markEnabled: true,
+                    markUp: "🔺",
+                    markDown: "🔻",
+                    markKeep: "➡️",
+                    markNew: "✨"
+                }
+            };
+
+            renderAll();
+            showToast("すべてのローカル保存データを削除して初期化しました", "rose");
         }
     </script>
 </body>
