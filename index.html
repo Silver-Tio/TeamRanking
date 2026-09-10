@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランキング告知ジェネレーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-md shadow-inner">
+                    <i class="fa-solid fa-trophy text-yellow-300 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-black tracking-tight">ランキング告知ジェネレーター</h1>
+                    <p class="text-xs text-indigo-100 hidden sm:block">数値を入力して告知テキストを自動生成・集計・共有</p>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <nav class="flex space-x-1 sm:space-x-1.5 bg-black/20 p-1 rounded-xl backdrop-blur-md text-xs sm:text-sm">
+                <button id="tab-generator-btn" onclick="switchTab('generator')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all bg-white text-indigo-700 shadow-sm flex items-center">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>告知作成
+                </button>
+                <button id="tab-members-btn" onclick="switchTab('members')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center">
+                    <i class="fa-solid fa-users mr-1.5"></i>メンバー
+                </button>
+                <button id="tab-settings-btn" onclick="switchTab('settings')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center">
+                    <i class="fa-solid fa-gear mr-1.5"></i>マーク・定型文
+                </button>
+                <button id="tab-share-btn" onclick="switchTab('share')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center">
+                    <i class="fa-solid fa-share-nodes mr-1.5 text-sky-300"></i>同期・共有
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 border border-slate-700">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+            <span id="toast-message" class="text-xs font-bold">メッセージ</span>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: Announcement Generator -->
+        <div id="tab-generator" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Panel: Inputs -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- 1. Basic Info Section -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 transition-all hover:shadow-md">
+                    <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center justify-between">
+                        <span class="flex items-center">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-2 text-sm font-black">1</span>
+                            基本情報 & テンプレート設定
+                        </span>
+                        <span class="text-xs text-slate-400 font-normal">※リアルタイム更新</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">チーム名</label>
+                            <input type="text" id="info-team" value="ライト" oninput="updatePreview()" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">対象月 (月)</label>
+                            <input type="text" id="info-month" value="9" oninput="updatePreview()" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">告知予定日</label>
+                            <input type="text" id="info-announcement" value="1日・10日・20日" oninput="updatePreview()" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold text-slate-600">データ更新日時</label>
+                                <button type="button" onclick="setCurrentDateTime()" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center">
+                                    <i class="fa-solid fa-clock-rotate-left mr-1"></i>現在時刻を設定
+                                </button>
+                            </div>
+                            <input type="text" id="info-updated" value="9/10 20:50" oninput="updatePreview()" class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-3">
+                        <button type="button" onclick="toggleTemplateEditor()" class="w-full flex items-center justify-between text-xs font-bold text-indigo-600 hover:text-indigo-800 py-1">
+                            <span class="flex items-center"><i class="fa-solid fa-pen-to-square mr-1.5"></i>告知テキストの文面・定型文をカスタマイズ</span>
+                            <i id="template-editor-icon" class="fa-solid fa-chevron-down text-xs transition-transform"></i>
+                        </button>
+                        
+                        <div id="template-editor-box" class="hidden mt-3 p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                            <!-- Variable Tags Explanation Box -->
+                            <div class="bg-white p-3 rounded-lg border border-slate-200 space-y-1.5 shadow-sm">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center">
+                                    <i class="fa-solid fa-code text-indigo-500 mr-1.5"></i>利用可能な変数タグ（入力した値に自動で置換されます）：
+                                </span>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[11px]">
+                                    <div class="bg-slate-50 p-1.5 rounded border border-slate-200 flex flex-col">
+                                        <code class="font-bold text-indigo-600">{team}</code>
+                                        <span class="text-[10px] text-slate-500">チーム名</span>
+                                    </div>
+                                    <div class="bg-slate-50 p-1.5 rounded border border-slate-200 flex flex-col">
+                                        <code class="font-bold text-indigo-600">{month}</code>
+                                        <span class="text-[10px] text-slate-500">対象月</span>
+                                    </div>
+                                    <div class="bg-slate-50 p-1.5 rounded border border-slate-200 flex flex-col">
+                                        <code class="font-bold text-indigo-600">{announcement}</code>
+                                        <span class="text-[10px] text-slate-500">告知予定日</span>
+                                    </div>
+                                    <div class="bg-slate-50 p-1.5 rounded border border-slate-200 flex flex-col">
+                                        <code class="font-bold text-indigo-600">{updated}</code>
+                                        <span class="text-[10px] text-slate-500">データ更新日時</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">冒頭（ヘッダー文面）</label>
+                                <textarea id="tmpl-header" rows="3" oninput="updatePreview()" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">ダイヤ見出し</label>
+                                    <input type="text" id="tmpl-diamond-title" oninput="updatePreview()" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">配信時間見出し</label>
+                                    <input type="text" id="tmpl-hours-title" oninput="updatePreview()" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">区切り線</label>
+                                    <input type="text" id="tmpl-divider" oninput="updatePreview()" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">末尾（フッター文面・注意事項等）</label>
+                                    <input type="text" id="tmpl-footer" placeholder="例: ※集計漏れがある場合は連絡してください" oninput="updatePreview()" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="pt-2 flex flex-wrap justify-between items-center gap-2 border-t border-slate-200">
+                                <span class="text-[11px] text-slate-500 font-bold">文面プリセット:</span>
+                                <div class="flex flex-wrap gap-1">
+                                    <button type="button" onclick="applyTemplatePreset('default')" class="px-2 py-1 bg-white hover:bg-indigo-50 border border-slate-200 rounded text-[11px] font-bold">標準</button>
+                                    <button type="button" onclick="applyTemplatePreset('simple')" class="px-2 py-1 bg-white hover:bg-indigo-50 border border-slate-200 rounded text-[11px] font-bold">シンプル</button>
+                                    <button type="button" onclick="applyTemplatePreset('cute')" class="px-2 py-1 bg-white hover:bg-indigo-50 border border-slate-200 rounded text-[11px] font-bold">ポップ</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Data Entry & Rankings Section -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 transition-all hover:shadow-md">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <h2 class="text-base font-bold text-slate-800 flex items-center">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-2 text-sm font-black">2</span>
+                            実績データの入力
+                        </h2>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="toggleQuickPasteModal()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center">
+                                <i class="fa-solid fa-file-import mr-1"></i>一括テキスト入力
+                            </button>
+                            <button onclick="addAllMasterMembers()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center">
+                                <i class="fa-solid fa-users-plus mr-1"></i>マスタ全員追加
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Paste Collapse Box -->
+                    <div id="quick-paste-box" class="hidden mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <p class="text-xs font-bold text-amber-900 mb-1">📋 コピペ一括入力（LINEや集計テキスト用）</p>
+                        <p class="text-[11px] text-amber-700 mb-2">「名前 ダイヤ数 配信時間」をスペース区切りで複数行貼付けできます。</p>
+                        <textarea id="quick-paste-input" rows="3" placeholder="例:&#10;あおい 185.2 95時間20分&#10;さくら 210.0 110時間" class="w-full p-2.5 bg-white border border-amber-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none mb-2"></textarea>
+                        <div class="flex justify-end gap-2">
+                            <button onclick="toggleQuickPasteModal()" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg">キャンセル</button>
+                            <button onclick="processQuickPaste()" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg">反映する</button>
+                        </div>
+                    </div>
+
+                    <!-- Previous Data Comparison Bar -->
+                    <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div>
+                            <span class="font-bold text-indigo-900 block">📊 前回順位の比較設定</span>
+                            <span id="previous-data-status" class="text-slate-500 text-[11px]">記憶されているデータ: なし（全メンバー新規扱い）</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="saveCurrentAsPrevious()" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all shadow-sm flex items-center">
+                                <i class="fa-solid fa-bookmark mr-1"></i>今回結果を記憶
+                            </button>
+                            <button onclick="clearPreviousData()" class="px-2.5 py-1.5 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-600 font-bold rounded-lg transition-all">
+                                クリア
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Entries Header -->
+                    <div class="hidden sm:flex items-center gap-2 px-2 py-1 text-slate-400 font-bold text-[11px] mb-1">
+                        <div class="flex-1">メンバー名</div>
+                        <div class="w-28 text-right">ダイヤ (k)</div>
+                        <div class="w-36">配信時間</div>
+                        <div class="w-8 text-center">操作</div>
+                    </div>
+
+                    <!-- Dynamic Entries Container -->
+                    <div id="entries-container" class="space-y-2 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+                        <!-- Entry rows added via JS -->
+                    </div>
+
+                    <!-- Add Row Controls -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                        <button onclick="addEntryRow()" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-all border border-indigo-200 flex items-center">
+                            <i class="fa-solid fa-plus mr-1"></i>入力行を追加
+                        </button>
+                        <button onclick="clearAllEntries()" class="text-xs text-slate-400 hover:text-rose-500 font-bold px-2 py-1">
+                            全クリア
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Output Preview & Copy -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-slate-900 text-white rounded-2xl shadow-xl p-5 sm:p-6 sticky top-20 border border-slate-800">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-eye text-indigo-400 text-lg"></i>
+                            <h2 class="text-base font-bold">告知テキストプレビュー</h2>
+                        </div>
+                        <span id="preview-count-badge" class="bg-indigo-900/80 text-indigo-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-indigo-700">0名</span>
+                    </div>
+
+                    <!-- Text Output Display Box -->
+                    <div class="relative group">
+                        <pre id="output-text-area" class="w-full h-[450px] p-4 bg-slate-950 text-slate-200 font-mono text-xs rounded-xl overflow-y-auto custom-scrollbar whitespace-pre-wrap break-words leading-relaxed select-all border border-slate-800"></pre>
+                    </div>
+
+                    <!-- Copy Button -->
+                    <div class="mt-4">
+                        <button onclick="copyToClipboard()" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white text-sm font-black rounded-xl shadow-lg transition-all transform active:scale-98 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-copy text-base"></i>
+                            <span>テキストをクリップボードにコピー</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 2: Member Master Management -->
+        <div id="tab-members" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center">
+                            <i class="fa-solid fa-users text-indigo-600 mr-2"></i>メンバーマスタ管理
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">よく使うメンバー名を登録しておくと、入力欄で予測補完・一括呼び出しが可能です。</p>
+                    </div>
+                    <span class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full">
+                        登録数: <span id="master-count" class="text-indigo-600">0</span>名
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Single & Bulk Add Form -->
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">新規メンバー追加</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="new-member-name" placeholder="名前を入力" class="flex-1 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <button onclick="addMasterMember()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition-all">追加</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">改行区切りで一括追加</label>
+                            <textarea id="bulk-members-input" rows="4" placeholder="あおい&#10;さくら&#10;たくみ" class="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-2"></textarea>
+                            <button onclick="bulkAddMasterMembers()" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all">一括登録</button>
+                        </div>
+                    </div>
+
+                    <!-- Master List -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+                        <div class="bg-slate-100 px-4 py-2.5 font-bold text-xs text-slate-700 flex justify-between items-center border-b border-slate-200">
+                            <span>登録済みメンバー一覧</span>
+                            <button onclick="clearAllMasterMembers()" class="text-rose-600 hover:underline text-[11px]">全員削除</button>
+                        </div>
+                        <ul id="master-member-list" class="divide-y divide-slate-100 overflow-y-auto max-h-[300px] flex-1 custom-scrollbar">
+                            <!-- Rendered by JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Symbol Settings -->
+        <div id="tab-settings" class="hidden max-w-3xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <!-- Header & Toggle Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center">
+                            <i class="fa-solid fa-icons text-indigo-600 mr-2"></i>順位変動マークの設定
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">前回順位と比較した際に表示される絵文字・記号を設定します。</p>
+                    </div>
+
+                    <!-- ON/OFF Switch -->
+                    <label class="inline-flex items-center cursor-pointer bg-slate-50 hover:bg-slate-100 p-2 rounded-xl border border-slate-200 transition-all select-none">
+                        <input type="checkbox" id="symbol-show-toggle" checked onchange="saveSettings()" class="sr-only peer">
+                        <div class="relative w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span class="ms-2.5 text-xs font-bold text-slate-700" id="symbol-show-label">マーク表示: ON</span>
+                    </label>
+                </div>
+
+                <div id="symbol-inputs-area" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 transition-all">
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ランクアップ</label>
+                        <input type="text" id="symbol-up" value="🔺" oninput="saveSettings()" class="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-base font-bold">
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ランクダウン</label>
+                        <input type="text" id="symbol-down" value="🔻" oninput="saveSettings()" class="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-base font-bold">
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">キープ (変動なし)</label>
+                        <input type="text" id="symbol-keep" value="➡️" oninput="saveSettings()" class="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-base font-bold">
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-center">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">NEW (新規登場)</label>
+                        <input type="text" id="symbol-new" value="✨" oninput="saveSettings()" class="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-base font-bold">
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 pt-4">
+                    <span class="block text-xs font-bold text-slate-700 mb-2">プリセットから選択</span>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="applyPreset('🔺', '🔻', '➡️', '✨')" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 text-xs font-bold rounded-lg border border-slate-200">標準 (🔺/🔻/➡️/✨)</button>
+                        <button onclick="applyPreset('🔥', '💧', '▶️', '🆕')" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 text-xs font-bold rounded-lg border border-slate-200">ポップ (🔥/💧/▶️/🆕)</button>
+                        <button onclick="applyPreset('⬆️', '⬇️', '➡️', '🌟')" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 text-xs font-bold rounded-lg border border-slate-200">シンプル (⬆️/⬇️/➡️/🌟)</button>
+                        <button onclick="applyPreset('👑', '📉', '➖', '🆕')" class="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 text-xs font-bold rounded-lg border border-slate-200">王冠 (👑/📉/➖/🆕)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Team Sync & Data Share -->
+        <div id="tab-share" class="hidden max-w-4xl mx-auto space-y-6">
+            
+            <!-- 1. Passcode Cloud Sync -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fa-solid fa-users-gear text-indigo-600 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">1. 合言葉（チームキー）によるチーム同期</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">共通の合言葉を設定することで、複数端末やチームメンバー間でデータを読み書きできます。</p>
+
+                <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">チームの合言葉 (共有キー)</label>
+                        <input type="text" id="passcode-sync-key" placeholder="例: team-light-2026" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="cloudPasscodeSync('save')" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1"></i>
+                            <span>この合言葉で保存</span>
+                        </button>
+                        <button onclick="cloudPasscodeSync('load')" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-cloud-arrow-down mr-1"></i>
+                            <span>この合言葉から読込</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. One-click URL Share -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fa-solid fa-link text-indigo-600 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">2. ワンクリック共有URLの発行</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">現在の全データを埋め込んだ専用URLを発行します。相手がそのURLを開くだけで全く同じ入力内容が復元されます。</p>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <button onclick="generateShareUrl()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center">
+                        <i class="fa-solid fa-share-nodes mr-2"></i>共有用URLを生成してコピー
+                    </button>
+                    <input type="text" id="share-url-output" readonly placeholder="ここに共有URLが表示されます" class="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono text-slate-600 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- 3. JSON Backup & Restore -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fa-solid fa-file-code text-indigo-600 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">3. JSONデータバックアップ & 復元</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">全データをテキストコードとして直接エクスポート・インポートできます。</p>
+
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <button onclick="exportJsonData()" class="flex-1 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl">
+                            <i class="fa-solid fa-download mr-1"></i>JSONコードを出力
+                        </button>
+                        <button onclick="importJsonData()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl">
+                            <i class="fa-solid fa-upload mr-1"></i>JSONコードから復元
+                        </button>
+                    </div>
+                    <textarea id="json-data-area" rows="4" placeholder="ここにJSONデータが表示・入力されます" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Firebase Storage Module Script (Passcode Cloud Sync) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let db = null;
+        let auth = null;
+        let authPromise = null;
+
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined' || !__firebase_config) return;
+
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    authPromise = signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    authPromise = signInAnonymously(auth);
+                }
+                await authPromise;
+            } catch (e) {
+                console.log("Cloud sync running in fallback mode.", e);
+            }
+        }
+
+        window.cloudPasscodeSync = async function(mode) {
+            const keyInput = document.getElementById('passcode-sync-key').value.trim();
+            if (!keyInput) {
+                window.showToast('合言葉を入力してください', 'error');
+                return;
+            }
+
+            const cleanKey = keyInput.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+            if (!db || !auth) {
+                window.showToast('クラウド機能が利用できません', 'error');
+                return;
+            }
+
+            try {
+                if (authPromise) await authPromise;
+                if (!auth.currentUser) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                }
+            } catch (authErr) {
+                console.error("Auth initialization error:", authErr);
+            }
+
+            if (!auth.currentUser) {
+                window.showToast('認証エラーが発生しました', 'error');
+                return;
+            }
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'passcodes', cleanKey);
+
+                if (mode === 'save') {
+                    const payload = window.collectFullDataPayload();
+                    payload.updatedAt = new Date().toISOString();
+                    await setDoc(docRef, payload);
+                    window.showToast(`合言葉「${keyInput}」でクラウドに保存しました`);
+                } else if (mode === 'load') {
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        window.applyFullDataPayload(snap.data());
+                        window.showToast(`合言葉「${keyInput}」からデータを読み込みました`);
+                    } else {
+                        window.showToast('指定された合言葉のデータが存在しません', 'error');
+                    }
+                }
+            } catch (e) {
+                console.error("Passcode Sync Error:", e);
+                window.showToast('同期処理中にエラーが発生しました', 'error');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', initFirebase);
+    </script>
+
+    <!-- Application Core Logic Script -->
+    <script>
+        const STORAGE_KEY_MEMBERS = 'ranking_gen_members_v2';
+        const STORAGE_KEY_SETTINGS = 'ranking_gen_settings_v2';
+        const STORAGE_KEY_PREVIOUS = 'ranking_gen_prev_data_v2';
+        const STORAGE_KEY_LAST_ENTRY = 'ranking_gen_last_entries_v2';
+        const STORAGE_KEY_TEMPLATE = 'ranking_gen_template_v2';
+
+        let masterMembers = [];
+        let previousData = { diamonds: {}, hours: {} };
+        let symbolSettings = {
+            show: true,
+            up: '🔺',
+            down: '🔻',
+            keep: '➡️',
+            new: '✨'
+        };
+
+        const DEFAULT_TEMPLATES = {
+            default: {
+                header: "チーム{team}内\n📢【{month}月間ランキングについて】\n📅 {announcement}（※前後する可能性あり）\nにランキングを共有します！",
+                diamondTitle: "💎ダイヤ数ランキング",
+                hoursTitle: "⏱配信時間ランキング",
+                divider: "--------------------------------------------",
+                footer: ""
+            },
+            simple: {
+                header: "【{team}】{month}月度 ランキング共有\n告知日: {announcement}",
+                diamondTitle: "[ダイヤ獲得ランキング]",
+                hoursTitle: "[配信時間ランキング]",
+                divider: "============================================",
+                footer: "※問い合わせは担当まで"
+            },
+            cute: {
+                header: "✨チーム{team}★{month}月ランキング発表✨\n📅 共有日: {announcement}\nみんなで応援して盛り上げていきましょう！🎉",
+                diamondTitle: "💎✨ ダイヤランキング ✨💎",
+                hoursTitle: "⏰🔥 配信時間ランキング 🔥⏰",
+                divider: "・‥…━━━☆・‥…━━━☆・‥…━━━☆",
+                footer: "いつも配信お疲れ様です！💖"
+            }
+        };
+
+        let templateSettings = { ...DEFAULT_TEMPLATES.default };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocalStorageData();
+            checkUrlHashData();
+            initTemplateInputValues();
+            updatePreview();
+            renderMasterMemberList();
+        });
+
+        // LocalStorage Loader
+        function loadLocalStorageData() {
+            // Load Members
+            const savedMembers = localStorage.getItem(STORAGE_KEY_MEMBERS);
+            if (savedMembers) {
+                try { masterMembers = JSON.parse(savedMembers); } catch(e) { masterMembers = []; }
+            } else {
+                masterMembers = ['あおい', 'たくみ', 'さくら', 'りく', 'ひなた', 'ゆうき'];
+                saveMasterMembers();
+            }
+
+            // Load Settings
+            const savedSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
+            if (savedSettings) {
+                try {
+                    symbolSettings = { ...symbolSettings, ...JSON.parse(savedSettings) };
+                    const toggle = document.getElementById('symbol-show-toggle');
+                    if (toggle) toggle.checked = symbolSettings.show !== false;
+                    
+                    const label = document.getElementById('symbol-show-label');
+                    if (label) label.textContent = `マーク表示: ${symbolSettings.show !== false ? 'ON' : 'OFF'}`;
+
+                    document.getElementById('symbol-up').value = symbolSettings.up || '🔺';
+                    document.getElementById('symbol-down').value = symbolSettings.down || '🔻';
+                    document.getElementById('symbol-keep').value = symbolSettings.keep || '➡️';
+                    document.getElementById('symbol-new').value = symbolSettings.new || '✨';
+                } catch(e) {}
+            }
+
+            // Load Template Settings
+            const savedTmpl = localStorage.getItem(STORAGE_KEY_TEMPLATE);
+            if (savedTmpl) {
+                try {
+                    templateSettings = { ...templateSettings, ...JSON.parse(savedTmpl) };
+                } catch(e) {}
+            }
+
+            // Load Previous Data
+            const savedPrev = localStorage.getItem(STORAGE_KEY_PREVIOUS);
+            if (savedPrev) {
+                try { previousData = JSON.parse(savedPrev); } catch(e) {}
+            }
+            updatePreviousDataStatusText();
+
+            // Load Last Entries or Defaults
+            const savedEntries = localStorage.getItem(STORAGE_KEY_LAST_ENTRY);
+            if (savedEntries) {
+                try {
+                    const parsed = JSON.parse(savedEntries);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        const container = document.getElementById('entries-container');
+                        if (container) container.innerHTML = '';
+                        parsed.forEach(e => addEntryRow(e.name, e.diamond, e.hours));
+                        return;
+                    }
+                } catch(e) {}
+            }
+            
+            initDefaultEntries();
+        }
+
+        function initTemplateInputValues() {
+            const h = document.getElementById('tmpl-header');
+            const dt = document.getElementById('tmpl-diamond-title');
+            const ht = document.getElementById('tmpl-hours-title');
+            const div = document.getElementById('tmpl-divider');
+            const ft = document.getElementById('tmpl-footer');
+
+            if (h) h.value = templateSettings.header || '';
+            if (dt) dt.value = templateSettings.diamondTitle || '';
+            if (ht) ht.value = templateSettings.hoursTitle || '';
+            if (div) div.value = templateSettings.divider || '';
+            if (ft) ft.value = templateSettings.footer || '';
+        }
+
+        function saveTemplateSettingsFromInputs() {
+            const h = document.getElementById('tmpl-header');
+            const dt = document.getElementById('tmpl-diamond-title');
+            const ht = document.getElementById('tmpl-hours-title');
+            const div = document.getElementById('tmpl-divider');
+            const ft = document.getElementById('tmpl-footer');
+
+            templateSettings = {
+                header: h ? h.value : templateSettings.header,
+                diamondTitle: dt ? dt.value : templateSettings.diamondTitle,
+                hoursTitle: ht ? ht.value : templateSettings.hoursTitle,
+                divider: div ? div.value : templateSettings.divider,
+                footer: ft ? ft.value : templateSettings.footer
+            };
+
+            localStorage.setItem(STORAGE_KEY_TEMPLATE, JSON.stringify(templateSettings));
+        }
+
+        function toggleTemplateEditor() {
+            const box = document.getElementById('template-editor-box');
+            const icon = document.getElementById('template-editor-icon');
+            if (box) box.classList.toggle('hidden');
+            if (icon) icon.classList.toggle('rotate-180');
+        }
+
+        function applyTemplatePreset(key) {
+            if (DEFAULT_TEMPLATES[key]) {
+                templateSettings = { ...DEFAULT_TEMPLATES[key] };
+                initTemplateInputValues();
+                localStorage.setItem(STORAGE_KEY_TEMPLATE, JSON.stringify(templateSettings));
+                updatePreview();
+                showToast(`文面プリセット「${key === 'default' ? '標準' : key === 'simple' ? 'シンプル' : 'ポップ'}」を適用しました`);
+            }
+        }
+
+        function checkUrlHashData() {
+            if (window.location.hash && window.location.hash.startsWith('#data=')) {
+                try {
+                    const encoded = window.location.hash.replace('#data=', '');
+                    const jsonStr = decodeURIComponent(atob(encoded));
+                    const data = JSON.parse(jsonStr);
+                    applyFullDataPayload(data);
+                    showToast('共有URLからデータを読み込みました');
+                    history.replaceState(null, '', window.location.pathname);
+                } catch(e) {
+                    console.error("URL decode error", e);
+                }
+            }
+        }
+
+        function toggleQuickPasteModal() {
+            const box = document.getElementById('quick-paste-box');
+            if (box) box.classList.toggle('hidden');
+        }
+
+        function processQuickPaste() {
+            const inputEl = document.getElementById('quick-paste-input');
+            if (!inputEl) return;
+            const input = inputEl.value.trim();
+            if (!input) {
+                showToast('テキストを入力してください', 'error');
+                return;
+            }
+
+            const lines = input.split('\n');
+            let addedCount = 0;
+
+            lines.forEach(line => {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 1 && parts[0] !== '') {
+                    const name = parts[0];
+                    const diamond = parts[1] || '';
+                    const hours = parts.slice(2).join(' ') || '';
+
+                    addEntryRow(name, diamond, hours);
+                    addedCount++;
+                }
+            });
+
+            inputEl.value = '';
+            toggleQuickPasteModal();
+            showToast(`${addedCount}件のデータを反映しました`);
+        }
+
+        function setCurrentDateTime() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const formatted = `${month}/${date} ${hours}:${minutes}`;
+            const targetEl = document.getElementById('info-updated');
+            if (targetEl) targetEl.value = formatted;
+            updatePreview();
+            showToast(`更新日時を設定しました (${formatted})`);
+        }
+
+        function saveMasterMembers() {
+            localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(masterMembers));
+            renderMasterMemberList();
+            updateSelectDropdowns();
+        }
+
+        function saveSettings() {
+            const showToggle = document.getElementById('symbol-show-toggle');
+            const up = document.getElementById('symbol-up');
+            const down = document.getElementById('symbol-down');
+            const keep = document.getElementById('symbol-keep');
+            const newSym = document.getElementById('symbol-new');
+
+            if (showToggle) symbolSettings.show = showToggle.checked;
+            if (up) symbolSettings.up = up.value || '🔺';
+            if (down) symbolSettings.down = down.value || '🔻';
+            if (keep) symbolSettings.keep = keep.value || '➡️';
+            if (newSym) symbolSettings.new = newSym.value || '✨';
+
+            const label = document.getElementById('symbol-show-label');
+            if (label) label.textContent = `マーク表示: ${symbolSettings.show ? 'ON' : 'OFF'}`;
+
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(symbolSettings));
+            updatePreview();
+        }
+
+        function applyPreset(up, down, keep, newSym) {
+            const upEl = document.getElementById('symbol-up');
+            const downEl = document.getElementById('symbol-down');
+            const keepEl = document.getElementById('symbol-keep');
+            const newEl = document.getElementById('symbol-new');
+
+            if (upEl) upEl.value = up;
+            if (downEl) downEl.value = down;
+            if (keepEl) keepEl.value = keep;
+            if (newEl) newEl.value = newSym;
+            saveSettings();
+            showToast('記号プリセットを適用しました');
+        }
+
+        function initDefaultEntries() {
+            const container = document.getElementById('entries-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const sampleData = [
+                { name: 'あおい', diamond: '185.2', hours: '95時間20分' },
+                { name: 'さくら', diamond: '210.0', hours: '110時間00分' },
+                { name: 'たくみ', diamond: '142.8', hours: '82時間45分' },
+                { name: 'りく', diamond: '98.5', hours: '64時間10分' }
+            ];
+
+            sampleData.forEach(item => {
+                addEntryRow(item.name, item.diamond, item.hours);
+            });
+        }
+
+        function addEntryRow(name = '', diamond = '', hours = '') {
+            const container = document.getElementById('entries-container');
+            if (!container) return;
+            const rowId = 'entry-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+
+            const row = document.createElement('div');
+            row.className = 'entry-row bg-slate-50 border border-slate-200 p-3 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2 transition-all hover:bg-indigo-50/30';
+            row.id = rowId;
+
+            row.innerHTML = `
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block sm:hidden text-[10px] font-bold text-slate-500 mb-0.5">名前</label>
+                    <div class="relative">
+                        <input type="text" list="list-${rowId}" value="${escapeHtml(name)}" placeholder="名前を入力" oninput="updatePreview()" class="entry-name w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold">
+                        <datalist id="list-${rowId}">
+                            ${masterMembers.map(m => `<option value="${escapeHtml(m)}">`).join('')}
+                        </datalist>
+                    </div>
+                </div>
+                <div class="w-full sm:w-28">
+                    <label class="block sm:hidden text-[10px] font-bold text-slate-500 mb-0.5">ダイヤ(k)</label>
+                    <div class="relative flex items-center">
+                        <input type="number" step="0.1" value="${diamond}" placeholder="例: 150.5" oninput="updatePreview()" class="entry-diamond w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-right pr-6">
+                        <span class="absolute right-2 text-xs font-bold text-slate-400 pointer-events-none">k</span>
+                    </div>
+                </div>
+                <div class="w-full sm:w-36">
+                    <label class="block sm:hidden text-[10px] font-bold text-slate-500 mb-0.5">配信時間</label>
+                    <input type="text" value="${escapeHtml(hours)}" placeholder="例: 85時間 / 85h" oninput="updatePreview()" class="entry-hours w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold">
+                </div>
+                <div class="flex justify-end sm:justify-center items-center">
+                    <button onclick="removeEntryRow('${rowId}')" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="削除">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(row);
+            updatePreview();
+        }
+
+        function removeEntryRow(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.remove();
+                updatePreview();
+            }
+        }
+
+        function clearAllEntries() {
+            const container = document.getElementById('entries-container');
+            if (container) container.innerHTML = '';
+            updatePreview();
+        }
+
+        function addAllMasterMembers() {
+            if (masterMembers.length === 0) {
+                showToast('マスタにメンバーが登録されていません', 'error');
+                return;
+            }
+            const existingNames = Array.from(document.querySelectorAll('.entry-name')).map(el => el.value.trim());
+
+            let addedCount = 0;
+            masterMembers.forEach(m => {
+                if (!existingNames.includes(m)) {
+                    addEntryRow(m, '', '');
+                    addedCount++;
+                }
+            });
+
+            showToast(`${addedCount}名のメンバーを追加しました`);
+        }
+
+        function updateSelectDropdowns() {
+            const rows = document.querySelectorAll('.entry-row');
+            rows.forEach(row => {
+                const datalist = row.querySelector('datalist');
+                if (datalist) {
+                    datalist.innerHTML = masterMembers.map(m => `<option value="${escapeHtml(m)}">`).join('');
+                }
+            });
+        }
+
+        function parseTimeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            let str = String(timeStr).trim().toLowerCase();
+
+            if (!isNaN(str) && str !== '') return parseFloat(str) * 60;
+
+            let hours = 0;
+            let minutes = 0;
+
+            const hourMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:時間|h|時間半)/);
+            if (hourMatch) hours = parseFloat(hourMatch[1]);
+
+            const minMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:分|m)/);
+            if (minMatch) minutes = parseFloat(minMatch[1]);
+
+            if (str.includes('時間半') && !minMatch) minutes += 30;
+
+            if (!hourMatch && !minMatch) {
+                const pureNum = str.replace(/[^0-9.]/g, '');
+                if (pureNum) return parseFloat(pureNum) * 60;
+            }
+
+            return (hours * 60) + minutes;
+        }
+
+        function updatePreview() {
+            saveTemplateSettingsFromInputs();
+
+            const teamEl = document.getElementById('info-team');
+            const monthEl = document.getElementById('info-month');
+            const announcementEl = document.getElementById('info-announcement');
+            const updatedEl = document.getElementById('info-updated');
+
+            const team = teamEl ? teamEl.value.trim() : 'ライト';
+            const month = monthEl ? monthEl.value.trim() : '9';
+            const announcement = announcementEl ? announcementEl.value.trim() : '1日・10日・20日';
+            const updated = updatedEl ? updatedEl.value.trim() : '9/10 20:50';
+
+            const rows = document.querySelectorAll('.entry-row');
+            const entries = [];
+
+            rows.forEach(row => {
+                const nameEl = row.querySelector('.entry-name');
+                const diamondEl = row.querySelector('.entry-diamond');
+                const hoursEl = row.querySelector('.entry-hours');
+
+                const name = nameEl ? nameEl.value.trim() : '';
+                const diamondRaw = diamondEl ? diamondEl.value : '';
+                const hoursRaw = hoursEl ? hoursEl.value.trim() : '';
+
+                if (name) {
+                    const diamondVal = parseFloat(diamondRaw) || 0;
+                    const timeMinutes = parseTimeToMinutes(hoursRaw);
+
+                    entries.push({
+                        name: name,
+                        diamondVal: diamondVal,
+                        diamondDisplay: diamondRaw !== '' ? diamondRaw : '0',
+                        hoursVal: timeMinutes,
+                        hoursDisplay: hoursRaw !== '' ? hoursRaw : '0時間'
+                    });
+                }
+            });
+
+            // Save last entries to LocalStorage
+            try {
+                const savePayload = entries.map(e => ({ name: e.name, diamond: e.diamondDisplay, hours: e.hoursDisplay }));
+                localStorage.setItem(STORAGE_KEY_LAST_ENTRY, JSON.stringify(savePayload));
+            } catch(e) {}
+
+            const countBadge = document.getElementById('preview-count-badge');
+            if (countBadge) countBadge.textContent = `${entries.length}名エントリー`;
+
+            // Sort by Diamonds
+            const diamondSorted = [...entries].sort((a, b) => b.diamondVal - a.diamondVal);
+            // Sort by Hours
+            const hoursSorted = [...entries].sort((a, b) => b.hoursVal - a.hoursVal);
+
+            // Diamond Lines
+            let diamondLines = [];
+            diamondSorted.forEach((item, index) => {
+                const currentRank = index + 1;
+                const prevRank = previousData.diamonds ? previousData.diamonds[item.name] : undefined;
+                const symbol = getVariationSymbol(currentRank, prevRank);
+                const symbolStr = symbol ? ` ${symbol}` : '';
+
+                diamondLines.push(`${currentRank}位 ${item.name} ${item.diamondDisplay}k${symbolStr}`);
+            });
+
+            // Hours Lines
+            let hoursLines = [];
+            hoursSorted.forEach((item, index) => {
+                const currentRank = index + 1;
+                const prevRank = previousData.hours ? previousData.hours[item.name] : undefined;
+                const symbol = getVariationSymbol(currentRank, prevRank);
+                const symbolStr = symbol ? ` ${symbol}` : '';
+
+                hoursLines.push(`${currentRank}位 ${item.name} ${item.hoursDisplay}${symbolStr}`);
+            });
+
+            // Process Header Template Variable Replacements
+            let headerText = templateSettings.header || '';
+            headerText = headerText
+                .replace(/\{team\}/g, team)
+                .replace(/\{month\}/g, month)
+                .replace(/\{announcement\}/g, announcement)
+                .replace(/\{updated\}/g, updated);
+
+            const diamondTitle = templateSettings.diamondTitle || '💎ダイヤ数ランキング';
+            const hoursTitle = templateSettings.hoursTitle || '⏱配信時間ランキング';
+            const divider = templateSettings.divider || '--------------------------------------------';
+            const footerText = templateSettings.footer ? `\n${templateSettings.footer}` : '';
+
+            const diamondSection = `${diamondTitle}\n※${updated}\n${divider}\n${diamondLines.length > 0 ? diamondLines.join('\n') : '（データなし）'}`;
+            const hoursSection = `${hoursTitle}\n※${updated}\n${divider}\n${hoursLines.length > 0 ? hoursLines.join('\n') : '（データなし）'}`;
+
+            const outputText = `${headerText}\n\n\n${diamondSection}\n\n${divider}\n${hoursSection}\n${divider}${footerText}`;
+
+            const outputArea = document.getElementById('output-text-area');
+            if (outputArea) outputArea.textContent = outputText;
+        }
+
+        function getVariationSymbol(currentRank, prevRank) {
+            if (symbolSettings.show === false) return '';
+            if (prevRank === undefined || prevRank === null) return symbolSettings.new;
+            if (prevRank > currentRank) return symbolSettings.up;
+            if (prevRank < currentRank) return symbolSettings.down;
+            return symbolSettings.keep;
+        }
+
+        function saveCurrentAsPrevious() {
+            const rows = document.querySelectorAll('.entry-row');
+            const entries = [];
+
+            rows.forEach(row => {
+                const nameEl = row.querySelector('.entry-name');
+                const diamondEl = row.querySelector('.entry-diamond');
+                const hoursEl = row.querySelector('.entry-hours');
+
+                const name = nameEl ? nameEl.value.trim() : '';
+                const diamondVal = diamondEl ? parseFloat(diamondEl.value) || 0 : 0;
+                const timeVal = hoursEl ? parseTimeToMinutes(hoursEl.value.trim()) : 0;
+
+                if (name) entries.push({ name, diamondVal, timeVal });
+            });
+
+            if (entries.length === 0) {
+                showToast('記憶するデータがありません', 'error');
+                return;
+            }
+
+            const diamondSorted = [...entries].sort((a, b) => b.diamondVal - a.diamondVal);
+            const hoursSorted = [...entries].sort((a, b) => b.timeVal - a.timeVal);
+
+            const newPrevData = { diamonds: {}, hours: {} };
+
+            diamondSorted.forEach((item, index) => { newPrevData.diamonds[item.name] = index + 1; });
+            hoursSorted.forEach((item, index) => { newPrevData.hours[item.name] = index + 1; });
+
+            previousData = newPrevData;
+            localStorage.setItem(STORAGE_KEY_PREVIOUS, JSON.stringify(previousData));
+
+            updatePreviousDataStatusText();
+            updatePreview();
+            showToast('現在の順位を次回比較用に記憶しました');
+        }
+
+        function clearPreviousData() {
+            previousData = { diamonds: {}, hours: {} };
+            localStorage.removeItem(STORAGE_KEY_PREVIOUS);
+            updatePreviousDataStatusText();
+            updatePreview();
+            showToast('記憶された前回データをクリアしました');
+        }
+
+        function updatePreviousDataStatusText() {
+            const el = document.getElementById('previous-data-status');
+            if (!el) return;
+            const dCount = Object.keys(previousData.diamonds || {}).length;
+            if (dCount > 0) {
+                el.textContent = `記憶されているデータ: ${dCount}名分の順位データあり`;
+                el.className = "text-xs text-emerald-600 font-bold";
+            } else {
+                el.textContent = `記憶されているデータ: なし（全メンバー新規扱い）`;
+                el.className = "text-xs text-slate-500 font-medium";
+            }
+        }
+
+        function renderMasterMemberList() {
+            const listEl = document.getElementById('master-member-list');
+            const countEl = document.getElementById('master-count');
+            
+            if (countEl) countEl.textContent = masterMembers.length;
+            if (!listEl) return;
+
+            if (masterMembers.length === 0) {
+                listEl.innerHTML = `<li class="p-4 text-center text-xs text-slate-400">登録メンバーがいません</li>`;
+                return;
+            }
+
+            listEl.innerHTML = masterMembers.map((name, index) => `
+                <li class="px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 text-xs font-semibold">
+                    <span class="text-slate-800"><i class="fa-solid fa-user text-slate-400 mr-2"></i>${escapeHtml(name)}</span>
+                    <button onclick="removeMasterMember(${index})" class="text-slate-400 hover:text-rose-600 p-1">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </li>
+            `).join('');
+        }
+
+        function addMasterMember() {
+            const input = document.getElementById('new-member-name');
+            if (!input) return;
+            const name = input.value.trim();
+            if (!name) return;
+
+            if (masterMembers.includes(name)) {
+                showToast('その名前は既に登録されています', 'error');
+                return;
+            }
+
+            masterMembers.push(name);
+            saveMasterMembers();
+            input.value = '';
+            showToast(`「${name}」を登録しました`);
+        }
+
+        function bulkAddMasterMembers() {
+            const textarea = document.getElementById('bulk-members-input');
+            if (!textarea) return;
+            const lines = textarea.value.split('\n');
+            let added = 0;
+
+            lines.forEach(line => {
+                const name = line.trim();
+                if (name && !masterMembers.includes(name)) {
+                    masterMembers.push(name);
+                    added++;
+                }
+            });
+
+            if (added > 0) {
+                saveMasterMembers();
+                textarea.value = '';
+                showToast(`${added}名のメンバーを一括追加しました`);
+            } else {
+                showToast('新規追加できる名前がありませんでした', 'error');
+            }
+        }
+
+        function removeMasterMember(index) {
+            masterMembers.splice(index, 1);
+            saveMasterMembers();
+            showToast('メンバーを削除しました');
+        }
+
+        function clearAllMasterMembers() {
+            if (masterMembers.length === 0) return;
+            masterMembers = [];
+            saveMasterMembers();
+            showToast('全員削除しました');
+        }
+
+        window.collectFullDataPayload = function() {
+            const rows = document.querySelectorAll('.entry-row');
+            const entries = [];
+            rows.forEach(row => {
+                const nameEl = row.querySelector('.entry-name');
+                const diamondEl = row.querySelector('.entry-diamond');
+                const hoursEl = row.querySelector('.entry-hours');
+                entries.push({
+                    name: nameEl ? nameEl.value.trim() : '',
+                    diamond: diamondEl ? diamondEl.value : '',
+                    hours: hoursEl ? hoursEl.value.trim() : ''
+                });
+            });
+
+            const teamEl = document.getElementById('info-team');
+            const monthEl = document.getElementById('info-month');
+            const announcementEl = document.getElementById('info-announcement');
+            const updatedEl = document.getElementById('info-updated');
+
+            return {
+                info: {
+                    team: teamEl ? teamEl.value.trim() : '',
+                    month: monthEl ? monthEl.value.trim() : '',
+                    announcement: announcementEl ? announcementEl.value.trim() : '',
+                    updated: updatedEl ? updatedEl.value.trim() : ''
+                },
+                masterMembers: masterMembers,
+                symbolSettings: symbolSettings,
+                templateSettings: templateSettings,
+                previousData: previousData,
+                entries: entries
+            };
+        };
+
+        window.applyFullDataPayload = function(data) {
+            if (!data) return;
+
+            if (data.info) {
+                const teamEl = document.getElementById('info-team');
+                const monthEl = document.getElementById('info-month');
+                const announcementEl = document.getElementById('info-announcement');
+                const updatedEl = document.getElementById('info-updated');
+
+                if (data.info.team !== undefined && teamEl) teamEl.value = data.info.team;
+                if (data.info.month !== undefined && monthEl) monthEl.value = data.info.month;
+                if (data.info.announcement !== undefined && announcementEl) announcementEl.value = data.info.announcement;
+                if (data.info.updated !== undefined && updatedEl) updatedEl.value = data.info.updated;
+            }
+
+            if (Array.isArray(data.masterMembers)) {
+                masterMembers = data.masterMembers;
+                saveMasterMembers();
+            }
+
+            if (data.symbolSettings) {
+                symbolSettings = { ...symbolSettings, ...data.symbolSettings };
+                const showToggle = document.getElementById('symbol-show-toggle');
+                const upEl = document.getElementById('symbol-up');
+                const downEl = document.getElementById('symbol-down');
+                const keepEl = document.getElementById('symbol-keep');
+                const newEl = document.getElementById('symbol-new');
+
+                if (showToggle) showToggle.checked = symbolSettings.show !== false;
+                const label = document.getElementById('symbol-show-label');
+                if (label) label.textContent = `マーク表示: ${symbolSettings.show !== false ? 'ON' : 'OFF'}`;
+
+                if (upEl) upEl.value = symbolSettings.up || '🔺';
+                if (downEl) downEl.value = symbolSettings.down || '🔻';
+                if (keepEl) keepEl.value = symbolSettings.keep || '➡️';
+                if (newEl) newEl.value = symbolSettings.new || '✨';
+                saveSettings();
+            }
+
+            if (data.templateSettings) {
+                templateSettings = { ...templateSettings, ...data.templateSettings };
+                initTemplateInputValues();
+                localStorage.setItem(STORAGE_KEY_TEMPLATE, JSON.stringify(templateSettings));
+            }
+
+            if (data.previousData) {
+                previousData = data.previousData;
+                localStorage.setItem(STORAGE_KEY_PREVIOUS, JSON.stringify(previousData));
+                updatePreviousDataStatusText();
+            }
+
+            if (Array.isArray(data.entries)) {
+                const container = document.getElementById('entries-container');
+                if (container) {
+                    container.innerHTML = '';
+                    data.entries.forEach(e => addEntryRow(e.name, e.diamond, e.hours));
+                }
+            }
+
+            updatePreview();
+        };
+
+        function generateShareUrl() {
+            const payload = collectFullDataPayload();
+            const jsonStr = JSON.stringify(payload);
+            const encoded = btoa(encodeURIComponent(jsonStr));
+            const fullUrl = window.location.origin + window.location.pathname + '#data=' + encoded;
+
+            const urlInput = document.getElementById('share-url-output');
+            if (urlInput) urlInput.value = fullUrl;
+
+            copyTextToClipboard(fullUrl);
+            showToast('共有URLを発行してコピーしました！');
+        }
+
+        function exportJsonData() {
+            const payload = collectFullDataPayload();
+            const jsonStr = JSON.stringify(payload, null, 2);
+            const area = document.getElementById('json-data-area');
+            if (area) area.value = jsonStr;
+            copyTextToClipboard(jsonStr);
+            showToast('JSONデータをコピーしました');
+        }
+
+        function importJsonData() {
+            const area = document.getElementById('json-data-area');
+            if (!area || !area.value.trim()) {
+                showToast('JSONコードを入力してください', 'error');
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(area.value.trim());
+                applyFullDataPayload(parsed);
+                showToast('JSONデータから復元しました');
+            } catch(e) {
+                showToast('JSONの形式が正しくありません', 'error');
+            }
+        }
+
+        function copyToClipboard() {
+            const outputArea = document.getElementById('output-text-area');
+            if (!outputArea) return;
+            copyTextToClipboard(outputArea.textContent);
+            showToast('告知テキストをコピーしました');
+        }
+
+        function copyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error("Copy failed", err);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['generator', 'members', 'settings', 'share'];
+
+            tabs.forEach(t => {
+                const tabEl = document.getElementById(`tab-${t}`);
+                const btnEl = document.getElementById(`tab-${t}-btn`);
+
+                if (tabEl && btnEl) {
+                    if (t === tabName) {
+                        tabEl.classList.remove('hidden');
+                        btnEl.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all bg-white text-indigo-700 shadow-sm flex items-center";
+                    } else {
+                        tabEl.classList.add('hidden');
+                        btnEl.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 font-bold rounded-lg transition-all text-white hover:bg-white/10 flex items-center";
+                    }
+                }
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            if (!toast || !toastMsg || !toastIcon) return;
+
+            toastMsg.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-rose-400 text-xl";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-xl";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
